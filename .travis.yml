@@ -1,0 +1,62 @@
+os: linux
+
+dist: xenial
+
+language: go
+
+service:
+  - docker
+
+sudo: required
+
+env:
+  global:
+    - CGO_ENABLED=0 
+    - GOFLAGS='-a -x' 
+    - WORKSPACE='/project'
+
+matrix:
+  include:
+    - go: 1.3.x 
+      env: GOOS=linux GOARCH=amd64 DIST_FAMILY=RHEL DIST=rhel5 BIN=ercole-agent PACKAGE_BUILD_IMAGE=sorintdev/rpmbuild-centos5
+ 
+before_install:
+  - sudo docker pull ${PACKAGE_BUILD_IMAGE}
+  - if [ -z ${TRAVIS_TAG} ] || [ ${TRAVIS_TAG} == *-* ]; then export VERSION=latest; else export VERSION=${TRAVIS_TAG}; fi
+  - echo ${TRAVIS_TAG}
+  - echo ${VERSION}
+
+install:
+  - sudo docker run -d --rm -it -e WORKSPACE="${WORKSPACE}" -e TRAVIS_REPO_SLUG="${TRAVIS_REPO_SLUG}" -e TRAVIS_BUILD_NUMBER="${TRAVIS_BUILD_NUMBER}" -v $PWD:"${WORKSPACE}" --name package_builder ${PACKAGE_BUILD_IMAGE} /bin/cat
+  - cp -r vendor/* ${GOPATH}/src/
+  - docker exec -it package_builder /bin/sh -c "cd ${WORKSPACE} && echo '%_topdir %(echo \$HOME)/rpmbuild' > ~/.rpmmacros"
+
+script:
+  - go build -o ${BIN} main.go
+  - sed -i "s|ERCOLE_VERSION|${VERSION}|g" package/rhel5/ercole-agent.spec
+  - docker exec -it package_builder /bin/sh -c "mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}" || echo rpmbuild
+  - docker exec -it package_builder /bin/sh -c "mkdir ~/rpmbuild/SOURCES/ercole-agent-${VERSION}"
+  - docker exec -it package_builder /bin/sh -c "find ~/rpmbuild/"
+  - docker exec -it package_builder /bin/sh -c "cd ${WORKSPACE} && cp -r * ~/rpmbuild/SOURCES/ercole-agent-${VERSION}/"
+  - docker exec -it package_builder /bin/sh -c "cd ${WORKSPACE} && tar -C ~/rpmbuild/SOURCES -cvzf ~/rpmbuild/SOURCES/ercole-agent-${VERSION}.tar.gz ercole-agent-${VERSION}"
+  - docker exec -it package_builder /bin/sh -c "cd ${WORKSPACE} && rpmbuild -bb package/${DIST}/ercole-agent.spec"
+  - docker exec -it package_builder /bin/sh -c "find ~/rpmbuild/"
+  - mkdir dist
+  - docker exec -it package_builder /bin/sh -c "cd ${WORKSPACE} && cp ~/rpmbuild/RPMS/x86_64/ercole-agent-${VERSION}-1*.x86_64.rpm dist/"
+
+after_success:
+  - ls
+  - file ${BIN}
+  - env
+  - ls dist
+ 
+deploy:
+  provider: releases
+  api_key:
+    secure: m7BUWwT7Wfr+R4zKtaY3Xp4T+JJIsgfpKWM8zCD16ef6UJqIGelaK1Xlshdsbadcy45TzoSPEB/unzspLuIVkiAtS5g2SC0dS/OWOeie5BwcfJLpMMziB2MYO3er1CmuuHJlIVC4/fZxsNyWvY4IHa3tP5WgI82vgpznlLuWE0z13VFGONYgLov1FxJCLeLXYYLhuPFmAdyn/h0g6pfOLJuYarEMBmL5xOaAB0ooWaEhN+HGcEbX+DFMtLpPWbNdv3mXJhzXr211eGVKZKjDEIEPnJYUUqNpnTQCVrTlDf9GJwXei/E9pE2aOm5GtbtL6VI7FBWXICMtJCg8jbfaHSzCl9hXAhxdUqbHMPLZfynSYuPDlbgRt97EpDnO7gua6tAFtyIKj3pNssapgz+o0aU1KYNDYMzZbmjRoF17XD2ZOgv5Qvto5QzJcy7LaRZmYqAWUDl5agYsEdrfe4vCPaNV5NR2bfkgfrsamf933PFtdWE/hT87pnxiU/8GGgDxDMdTy1CQUOnvHIOGbnL6QXl1CMxsMvmcLB6GgycCcCsWgLlfzuU0cf7AjsdybD0aWhMABl9Y02FRkOD4vlxRdX3Ib0rL+gWLmpNwSXVlnbrfgrMituQmSdxS7+rmBATx3My+uh9ahm9cRpnvBIlSGDnQingRFYhbRngbguNLmNA=
+  file_glob: true
+  file: dist/*
+  skip_cleanup: true
+  on:
+    tags: true
+
