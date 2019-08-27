@@ -33,6 +33,8 @@ import (
 	"github.com/ercole-io/ercole-agent-rhel5/scheduler/storage"
 )
 
+var version string = "latest"
+
 func main() {
 	configuration := config.ReadConfig()
 
@@ -154,6 +156,7 @@ func buildData(configuration config.Configuration) {
 	}
 	hostData.Environment = configuration.Envtype
 	hostData.Location = configuration.Location
+	hostData.Version = version
 
 	// Fill index fields
 	hdDatabases := ""
