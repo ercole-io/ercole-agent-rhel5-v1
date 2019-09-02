@@ -35,6 +35,7 @@ type Configuration struct {
 	Frequency              int
 	Forcestats             bool
 	EnableServerValidation bool
+	Oratab                 string
 }
 
 // ReadConfig reads the configuration file from the current dir
@@ -67,6 +68,10 @@ func ReadConfig() Configuration {
 
 	if err != nil {
 		log.Fatal("Unable to parse configuration file", err)
+	}
+
+	if conf.Oratab == "" {
+		conf.Oratab = "/etc/oratab"
 	}
 
 	return conf
