@@ -36,7 +36,7 @@ install:
   - docker exec -it package_builder /bin/sh -c "cd ${WORKSPACE} && echo '%_topdir %(echo \$HOME)/rpmbuild' > ~/.rpmmacros"
 
 script:
-  - sed 's/"latest"/"${VERSION}"/' main.go > /tmp/main.go
+  - sed "s/\"latest\"/\"${VERSION}\"/" main.go > /tmp/main.go
   - cp /tmp/main.go main.go
   - go build -o ${BIN} main.go
   - sed -i "s|ERCOLE_VERSION|${VERSION}|g" package/rhel5/ercole-agent.spec
@@ -62,7 +62,6 @@ before_deploy:
   - if [[ ${VERSION} == "latest" ]]; then git push gh travis-${VERSION}-build || true; fi
   - if [[ ${VERSION} == "latest" ]]; then git push -f gh travis-${VERSION}-build; fi
   - if [[ ${VERSION} == "latest" ]]; then git remote remove gh; fi
-
 
 deploy:
   provider: releases
