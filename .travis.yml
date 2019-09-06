@@ -4,7 +4,7 @@ dist: xenial
 
 language: go
 
-service:
+services:
   - docker
 
 sudo: required
@@ -14,6 +14,10 @@ env:
     - CGO_ENABLED=0 
     - GOFLAGS='-a -x' 
     - WORKSPACE='/project'
+
+branches:
+  except:
+    - /^travis-.*-build$/
 
 matrix:
   include:
@@ -52,24 +56,21 @@ after_success:
   - env
   - ls dist
  
+before_deploy:
+  - if [[ ${VERSION} == "latest" ]]; then git tag -f travis-${VERSION}-build; fi
+  - if [[ ${VERSION} == "latest" ]]; then git remote add gh https://simonerota:${GITHUB_RELEASE_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git; fi
+  - if [[ ${VERSION} == "latest" ]]; then git push gh travis-${VERSION}-build || true; fi
+  - if [[ ${VERSION} == "latest" ]]; then git push -f gh travis-${VERSION}-build; fi
+  - if [[ ${VERSION} == "latest" ]]; then git remote remove gh; fi
+
+
 deploy:
   provider: releases
-  api_key:
-    secure: m7BUWwT7Wfr+R4zKtaY3Xp4T+JJIsgfpKWM8zCD16ef6UJqIGelaK1Xlshdsbadcy45TzoSPEB/unzspLuIVkiAtS5g2SC0dS/OWOeie5BwcfJLpMMziB2MYO3er1CmuuHJlIVC4/fZxsNyWvY4IHa3tP5WgI82vgpznlLuWE0z13VFGONYgLov1FxJCLeLXYYLhuPFmAdyn/h0g6pfOLJuYarEMBmL5xOaAB0ooWaEhN+HGcEbX+DFMtLpPWbNdv3mXJhzXr211eGVKZKjDEIEPnJYUUqNpnTQCVrTlDf9GJwXei/E9pE2aOm5GtbtL6VI7FBWXICMtJCg8jbfaHSzCl9hXAhxdUqbHMPLZfynSYuPDlbgRt97EpDnO7gua6tAFtyIKj3pNssapgz+o0aU1KYNDYMzZbmjRoF17XD2ZOgv5Qvto5QzJcy7LaRZmYqAWUDl5agYsEdrfe4vCPaNV5NR2bfkgfrsamf933PFtdWE/hT87pnxiU/8GGgDxDMdTy1CQUOnvHIOGbnL6QXl1CMxsMvmcLB6GgycCcCsWgLlfzuU0cf7AjsdybD0aWhMABl9Y02FRkOD4vlxRdX3Ib0rL+gWLmpNwSXVlnbrfgrMituQmSdxS7+rmBATx3My+uh9ahm9cRpnvBIlSGDnQingRFYhbRngbguNLmNA=
+  api_key: $GITHUB_RELEASE_TOKEN
   file_glob: true
   file: dist/*
   skip_cleanup: true
+  name: $VERSION
+  overwrite: true
   on:
-    tags: true
-
-# deploy:
-#   provider: releases
-#   api_key:
-#     secure: m7BUWwT7Wfr+R4zKtaY3Xp4T+JJIsgfpKWM8zCD16ef6UJqIGelaK1Xlshdsbadcy45TzoSPEB/unzspLuIVkiAtS5g2SC0dS/OWOeie5BwcfJLpMMziB2MYO3er1CmuuHJlIVC4/fZxsNyWvY4IHa3tP5WgI82vgpznlLuWE0z13VFGONYgLov1FxJCLeLXYYLhuPFmAdyn/h0g6pfOLJuYarEMBmL5xOaAB0ooWaEhN+HGcEbX+DFMtLpPWbNdv3mXJhzXr211eGVKZKjDEIEPnJYUUqNpnTQCVrTlDf9GJwXei/E9pE2aOm5GtbtL6VI7FBWXICMtJCg8jbfaHSzCl9hXAhxdUqbHMPLZfynSYuPDlbgRt97EpDnO7gua6tAFtyIKj3pNssapgz+o0aU1KYNDYMzZbmjRoF17XD2ZOgv5Qvto5QzJcy7LaRZmYqAWUDl5agYsEdrfe4vCPaNV5NR2bfkgfrsamf933PFtdWE/hT87pnxiU/8GGgDxDMdTy1CQUOnvHIOGbnL6QXl1CMxsMvmcLB6GgycCcCsWgLlfzuU0cf7AjsdybD0aWhMABl9Y02FRkOD4vlxRdX3Ib0rL+gWLmpNwSXVlnbrfgrMituQmSdxS7+rmBATx3My+uh9ahm9cRpnvBIlSGDnQingRFYhbRngbguNLmNA=
-#   file_glob: true
-#   file: dist/*
-#   skip_cleanup: true
-#   name: "latest"
-#   body: "latest"
-#   prerelease: true
-#   overwrite: true
+    all_branches: true
