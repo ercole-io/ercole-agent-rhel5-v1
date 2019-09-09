@@ -34,6 +34,7 @@ import (
 )
 
 var version string = "latest"
+var hostDataSchemaVersion = 1
 
 func main() {
 	configuration := config.ReadConfig()
@@ -163,6 +164,7 @@ func buildData(configuration config.Configuration) {
 	hostData.Location = configuration.Location
 	hostData.HostType = configuration.HostType
 	hostData.Version = version
+	hostData.HostDataSchemaVersion = hostDataSchemaVersion
 
 	// Fill index fields
 	hdDatabases := ""
