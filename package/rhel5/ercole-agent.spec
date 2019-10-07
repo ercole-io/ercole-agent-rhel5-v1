@@ -47,6 +47,7 @@ install -m 755 package/rhel5/ercole-agent $RPM_BUILD_ROOT/etc/init.d/ercole-agen
 install -m 644 package/rhel5/logrotate $RPM_BUILD_ROOT/etc/logrotate.d/ercole-agent
 
 %post
+chkconfig ercole-agent on
 
 %files
 %dir /opt/ercole-agent
