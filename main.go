@@ -34,7 +34,7 @@ import (
 )
 
 var version string = "latest"
-var hostDataSchemaVersion = 1
+var hostDataSchemaVersion = 3
 
 func main() {
 	configuration := config.ReadConfig()
