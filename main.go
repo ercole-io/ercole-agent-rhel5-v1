@@ -34,7 +34,7 @@ import (
 )
 
 var version string = "latest"
-var hostDataSchemaVersion = 3
+var hostDataSchemaVersion = 4
 
 func main() {
 	configuration := config.ReadConfig()
@@ -114,6 +114,9 @@ func buildData(configuration config.Configuration) {
 			} else {
 				database.Features = marshal.Features(out)
 			}
+
+			out = fetcher(configuration, "opt", db.DBName, dbVersion, db.OracleHome)
+			database.Features2 = marshal.Features2(out)
 
 			out = fetcher(configuration, "license", db.DBName, dbVersion, host.Type, db.OracleHome)
 			database.Licenses = marshal.Licenses(out)
