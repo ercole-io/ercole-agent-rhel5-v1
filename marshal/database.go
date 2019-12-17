@@ -31,7 +31,7 @@ func Database(cmdOutput []byte) model.Database {
 	for scanner.Scan() {
 		line := scanner.Text()
 		splitted := strings.Split(line, "|||")
-		if len(splitted) == 23 {
+		if len(splitted) == 24 {
 			db.Name = strings.TrimSpace(splitted[0])
 			db.UniqueName = strings.TrimSpace(splitted[1])
 			db.InstanceNumber = strings.TrimSpace(splitted[2])
@@ -52,9 +52,14 @@ func Database(cmdOutput []byte) model.Database {
 			db.Allocated = strings.TrimSpace(splitted[17])
 			db.Elapsed = strings.TrimSpace(splitted[18])
 			db.DBTime = strings.TrimSpace(splitted[19])
-			db.Work = strings.TrimSpace(splitted[20])
-			db.ASM = parseBool(strings.TrimSpace(splitted[21]))
-			db.Dataguard = parseBool(strings.TrimSpace(splitted[22]))
+			db.DailyCPUUsage = strings.TrimSpace(splitted[20])
+			db.Work = strings.TrimSpace(splitted[21])
+			db.ASM = parseBool(strings.TrimSpace(splitted[22]))
+			db.Dataguard = parseBool(strings.TrimSpace(splitted[23]))
+
+			if db.DailyCPUUsage == "" {
+				db.DailyCPUUsage = db.Work
+			}
 		}
 	}
 	return db
