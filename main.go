@@ -234,9 +234,8 @@ func fetcher(configuration config.Configuration, fetcherName string, params ...s
 		stderr bytes.Buffer
 	)
 
-	log.Println("Fetching", fetcherName)
-
 	baseDir := config.GetBaseDir()
+	log.Println("Fetching " + baseDir + "/fetch/" + fetcherName + " " + strings.Join(params, " "))
 	cmd = exec.Command(baseDir+"/fetch/"+fetcherName, params...)
 
 	cmd.Stdout = &stdout
