@@ -98,22 +98,21 @@ func buildData(configuration config.Configuration) {
 			out = fetcher(configuration, "patch", db.DBName, dbVersion, db.OracleHome)
 			database.Patches = marshal.Patches(out)
 
-			out = fetcher(configuration, "feature", db.DBName, dbVersion, db.OracleHome)
-			if strings.Contains(string(out), "deadlocked on readable physical standby") {
-				log.Println("Detected bug active dataguard 2311894.1!")
-				database.Features = []model.Feature{}
-			} else if strings.Contains(string(out), "ORA-01555: snapshot too old: rollback segment number") {
-				log.Println("Detected error on active dataguard ORA-01555!")
-				database.Features = []model.Feature{}
-			} else {
-				database.Features = marshal.Features(out)
-			}
-
 			out = fetcher(configuration, "opt", db.DBName, dbVersion, db.OracleHome)
 			database.Features2 = marshal.Features2(out)
 
 			out = fetcher(configuration, "license", db.DBName, dbVersion, host.Type, db.OracleHome)
 			database.Licenses = marshal.Licenses(out)
+			database.Features = make([]model.Feature, 0)
+			for _, fe := range database.Licenses {
+				if fe.Name == "Oracle EXE" || fe.Name == "Oracle ENT" || fe.Name == "Oracle STD" {
+					continue
+				}
+				database.Features = append(database.Features, model.Feature{
+					Name:   fe.Name,
+					Status: fe.Count > 0,
+				})
+			}
 
 			out = fetcher(configuration, "addm", db.DBName, db.OracleHome)
 			database.ADDMs = marshal.Addms(out)
